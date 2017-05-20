@@ -25,7 +25,10 @@ SECRET_KEY = 'wf6iw7bp3i=m^6tc&&dqqhzi=ypukl&eozjmj$3np(qc#&7-5='
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+# make server available outside of VirtualBox per `hostname -I` and:
+# https://coderwall.com/p/yx23qw/access-your- \
+# virtualbox-guest-localhost-from-your-host-os
+ALLOWED_HOSTS = ['192.168.0.101']
 
 
 # Application definition
@@ -37,6 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'api',
 ]
 
 MIDDLEWARE = [
