@@ -1,5 +1,5 @@
 from django.db import models
-import json
+# import json
 
 
 class Game(models.Model):
@@ -19,9 +19,17 @@ class Game(models.Model):
     @property
     def board(self):
         """Get board."""
-        return json.loads(self._board)
+        return self._board
+
+        # to be uncommented when each board isn't just
+        # an empty string (which is invalid JSON)
+        # return json.loads(self._board)
 
     @board.setter
     def set_board(self, board):
         """Set board."""
-        self._board = json.dumps(board)
+        self._board = board
+
+        # to be uncommented when each board isn't just
+        # an empty string (which is invalid JSON)
+        # self._board = json.dumps(board)
