@@ -1,5 +1,5 @@
+import json
 from django.db import models
-# import json
 
 
 class Game(models.Model):
@@ -9,27 +9,34 @@ class Game(models.Model):
     # - http://stackoverflow.com/a/22343962
     # - https://www.stavros.io/posts/how-replace-django-model-field-property/
     _board = models.CharField(max_length=255, blank=False)
+
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         """Return string representation."""
-        return self.board
+        board = ''
+        for row in self.board:
+            board += ' '.join(map(self._player_to_str, row)) + '\n'
+        return board
 
     @property
     def board(self):
-        """Get board."""
-        return self._board
-
-        # to be uncommented when each board isn't just
-        # an empty string (which is invalid JSON)
-        # return json.loads(self._board)
+        """Get board as JSON object."""
+        if self._board:
+            return json.loads(self._board)
+        else:
+            return ''
 
     @board.setter
     def set_board(self, board):
-        """Set board."""
-        self._board = board
+        """Set board from JSON object."""
+        self._board = json.dumps(board)
 
-        # to be uncommented when each board isn't just
-        # an empty string (which is invalid JSON)
-        # self._board = json.dumps(board)
+    def _player_to_str(self, player):
+        if player is None:
+            return '-'
+        elif player:
+            return 'X'
+        else:
+            return 'O'
