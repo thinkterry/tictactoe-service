@@ -39,3 +39,9 @@ class GameSerializer(serializers.ModelSerializer):
                     raise serializers.ValidationError(
                         'Board can only contain boolean or nil values')
         return value
+
+    def validate_move(self, board, player, row, col):
+        """Ensure moves cannot overwrite past moves."""
+        if board[row][col] is not None:
+            raise serializers.ValidationError(
+                'Moves cannot overwrite existing moves')

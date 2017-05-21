@@ -78,7 +78,6 @@ class ViewTestCase(TestCase):
     def test_api_can_move_with_a_valid_token(self):
         """Test that the API can move with a valid token."""
         self._join(self.x)
-
         expected_game = json.dumps([
             [True, None, None],
             [None, None, None],
@@ -121,7 +120,6 @@ class ViewTestCase(TestCase):
     def test_api_requires_row_parameter(self):
         """Test that the API requires the row parameter."""
         self._join(self.x)
-
         response = self.client.post(
             reverse('details', kwargs={'pk': self.game.id}),
             {'col': 0},
@@ -133,7 +131,6 @@ class ViewTestCase(TestCase):
     def test_api_requires_col_parameter(self):
         """Test that the API requires the col parameter."""
         self._join(self.x)
-
         response = self.client.post(
             reverse('details', kwargs={'pk': self.game.id}),
             {'row': 0},
@@ -145,7 +142,6 @@ class ViewTestCase(TestCase):
     def test_api_requires_row_and_col_in_range(self):
         """Test that the API requires row and col be in range."""
         self._join(self.x)
-
         invalids = [
             {'row': -1, 'col': 0},
             {'row': 0, 'col': -1},
@@ -168,7 +164,6 @@ class ViewTestCase(TestCase):
         """Test that API players place their own pieces."""
         self._join(self.x)
         self._join(self.o)
-
         expected_game = json.dumps([
             [True, None, None],
             [None, None, None],
@@ -187,3 +182,19 @@ class ViewTestCase(TestCase):
 
         self.assertEquals(response.status_code, status.HTTP_200_OK)
         self.assertContains(response, expected_game)
+
+    def test_api_moves_cannot_overwrite_existing_moves(self):
+        """Test that API moves cannot overwrite existing moves."""
+        self._join(self.x)
+        self.client.post(
+            reverse('details', kwargs={'pk': self.game.id}),
+            {'row': 0, 'col': 0},
+            format='json',
+            HTTP_AUTHORIZATION='Token ' + self.fake_token_prefix + self.x)
+        response = self.client.post(
+            reverse('details', kwargs={'pk': self.game.id}),
+            {'row': 0, 'col': 0},
+            format='json',
+            HTTP_AUTHORIZATION='Token ' + self.fake_token_prefix + self.x)
+
+        self.assertEquals(response.status_code, status.HTTP_400_BAD_REQUEST)

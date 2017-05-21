@@ -48,6 +48,7 @@ class GameDetail(APIView):
             return err
 
         board = json.loads(game.board)
+        GameSerializer().validate_move(board, player, row, col)
         board[row][col] = player
         board_json = json.dumps(board)
 
