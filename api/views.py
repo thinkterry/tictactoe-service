@@ -48,11 +48,13 @@ class GameDetail(APIView):
             return err
 
         board = json.loads(game.board)
-        GameSerializer().validate_move(board, player, row, col)
+        GameSerializer().validate_move(game, board, player, row, col)
         board[row][col] = player
         board_json = json.dumps(board)
 
-        serializer = GameSerializer(data={'board': board_json})
+        serializer = GameSerializer(data={
+            'board': board_json,
+            'current_player': (not game.current_player)})
         serializer.is_valid(raise_exception=True)
         serializer.update(game, serializer.data)
         return Response(serializer.data)
@@ -77,11 +79,11 @@ class GameDetail(APIView):
             col = int(col)
         except Exception:
             return None, None, Response(
-                'row and col required in request body',
+                'Row and col required in request body',
                 status=status.HTTP_400_BAD_REQUEST)
         if not 0 <= row < Game.BOARD_SIZE or not 0 <= col < Game.BOARD_SIZE:
             return None, None, Response(
-                'row and col must be between {} and {}'.format(
+                'Row and col must be between {} and {}'.format(
                     0, Game.BOARD_SIZE - 1),
                 status=status.HTTP_400_BAD_REQUEST)
         return row, col, None
@@ -95,7 +97,7 @@ class JoinGame(APIView):
         game = Game.objects.get(pk=pk)
         if game.x_token and game.o_token:
             return Response(
-                'both X and O have already joined this game',
+                'Both X and O have already joined this game',
                 status=status.HTTP_403_FORBIDDEN)
         if player == 'X':
             if game.x_token:

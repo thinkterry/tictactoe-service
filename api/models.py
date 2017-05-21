@@ -3,13 +3,19 @@ from django.db import models
 
 
 class Game(models.Model):
-    """Tic-tac-toe game."""
+    """Tic-tac-toe game.
+
+    Each player, upon joining the game as their chosen piece (X or O)
+    is given a token, which authorizes them to make moves. Internally,
+    the X player is represented by a True value and the O player is
+    represented by a False value."""
 
     BOARD_SIZE = 3
 
     board = models.CharField(max_length=255, blank=False)
-    x_token = models.CharField(max_length=255, null=True)  # secret
-    o_token = models.CharField(max_length=255, null=True)  # secret
+    current_player = models.BooleanField(default=True)
+    x_token = models.CharField(max_length=255, null=True)
+    o_token = models.CharField(max_length=255, null=True)
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 

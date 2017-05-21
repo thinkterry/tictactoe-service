@@ -77,12 +77,12 @@ class ViewTestCase(TestCase):
 
     def test_api_can_move_with_a_valid_token(self):
         """Test that the API can move with a valid token."""
-        self._join(self.x)
         expected_game = json.dumps([
             [True, None, None],
             [None, None, None],
             [None, None, None]
         ])
+        self._join(self.x)
         response = self.client.post(
             reverse('details', kwargs={'pk': self.game.id}),
             {'row': 0, 'col': 0},
@@ -141,7 +141,6 @@ class ViewTestCase(TestCase):
 
     def test_api_requires_row_and_col_in_range(self):
         """Test that the API requires row and col be in range."""
-        self._join(self.x)
         invalids = [
             {'row': -1, 'col': 0},
             {'row': 0, 'col': -1},
@@ -149,6 +148,7 @@ class ViewTestCase(TestCase):
             {'row': 0, 'col': 3},
             {'row': 'row', 'col': 'col'}
         ]
+        self._join(self.x)
         for invalid in invalids:
             response = self.client.post(
                 reverse('details', kwargs={'pk': self.game.id}),
@@ -162,13 +162,13 @@ class ViewTestCase(TestCase):
 
     def test_api_players_place_their_own_pieces(self):
         """Test that API players place their own pieces."""
-        self._join(self.x)
-        self._join(self.o)
         expected_game = json.dumps([
             [True, None, None],
             [None, None, None],
             [None, None, False]
         ])
+        self._join(self.x)
+        self._join(self.o)
         self.client.post(
             reverse('details', kwargs={'pk': self.game.id}),
             {'row': 0, 'col': 0},
@@ -198,3 +198,50 @@ class ViewTestCase(TestCase):
             HTTP_AUTHORIZATION='Token ' + self.fake_token_prefix + self.x)
 
         self.assertEquals(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_api_moves_alternate(self):
+        """Test that API moves alternate."""
+        expected_game = json.dumps([
+            [True, None, None],
+            [None, None, None],
+            [False, None, True]
+        ])
+        self._join(self.x)
+        self._join(self.o)
+
+        self.client.post(
+            reverse('details', kwargs={'pk': self.game.id}),
+            {'row': 0, 'col': 0},
+            format='json',
+            HTTP_AUTHORIZATION='Token ' + self.fake_token_prefix + self.x)
+        self.client.post(
+            reverse('details', kwargs={'pk': self.game.id}),
+            {'row': 2, 'col': 0},
+            format='json',
+            HTTP_AUTHORIZATION='Token ' + self.fake_token_prefix + self.o)
+        response = self.client.post(
+            reverse('details', kwargs={'pk': self.game.id}),
+            {'row': 1, 'col': 1},
+            format='json',
+            HTTP_AUTHORIZATION='Token ' + self.fake_token_prefix + self.o)
+
+        self.assertEquals(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        self.client.post(
+            reverse('details', kwargs={'pk': self.game.id}),
+            {'row': 2, 'col': 2},
+            format='json',
+            HTTP_AUTHORIZATION='Token ' + self.fake_token_prefix + self.x)
+        response = self.client.post(
+            reverse('details', kwargs={'pk': self.game.id}),
+            {'row': 0, 'col': 2},
+            format='json',
+            HTTP_AUTHORIZATION='Token ' + self.fake_token_prefix + self.x)
+
+        self.assertEquals(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        response = self.client.get(
+            reverse('details', kwargs={'pk': self.game.id}),
+            format='json')
+
+        self.assertContains(response, expected_game)

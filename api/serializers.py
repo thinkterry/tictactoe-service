@@ -10,7 +10,7 @@ class GameSerializer(serializers.ModelSerializer):
         """Map serializer fields to model fields."""
 
         model = Game
-        fields = ('id', 'board', 'x_token', 'o_token')
+        fields = ('id', 'board', 'x_token', 'o_token', 'current_player')
         # Ideally these secret tokens would be 'write_only' to
         # ensure they remain secret to the users. Unfortunately,
         # doing so also ensures they remain secret to the views
@@ -40,8 +40,11 @@ class GameSerializer(serializers.ModelSerializer):
                         'Board can only contain boolean or nil values')
         return value
 
-    def validate_move(self, board, player, row, col):
-        """Ensure moves cannot overwrite past moves."""
+    def validate_move(self, game, board, player, row, col):
+        """Ensure moves cannot overwrite existing moves."""
         if board[row][col] is not None:
             raise serializers.ValidationError(
                 'Moves cannot overwrite existing moves')
+        if player != game.current_player:
+            raise serializers.ValidationError(
+                'Not your turn')
