@@ -1,4 +1,6 @@
 import json
+import uuid
+from unittest.mock import MagicMock
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 from rest_framework import status
@@ -32,52 +34,118 @@ class ViewTestCase(TestCase):
         self.response = self.client.post(
             reverse('create'),
             format='json')
+        self.game = Game.objects.all().first()
+        self.fake_token_prefix = 'abc-123'
+        self.x = 'X'
+        self.o = 'O'
+
+    def _join(self, player):
+        fake_token = self.fake_token_prefix + player
+        uuid.uuid4 = MagicMock(return_value=fake_token)
+        response = self.client.post(
+            reverse(
+                'join',
+                kwargs={'pk': self.game.id, 'player': player}),
+            format='json')
+        return response
 
     def test_api_can_get_a_game(self):
         """Test that the API can get a game."""
-        game = Game.objects.get(pk=Game.MASTER_GAME_ID)
         response = self.client.get(
-            reverse('details', kwargs={'pk': game.id}),
+            reverse('details', kwargs={'pk': self.game.id}),
             format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertContains(response, game.board)
 
-    def test_api_can_make_a_move(self):
-        """Test that the API can make a move."""
-        game = Game.objects.get(pk=Game.MASTER_GAME_ID)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertContains(response, self.game.board)
+
+    def test_api_can_join_as_both_players(self):
+        """Test that the API can join as both_players."""
+        for player in [self.x, self.o]:
+            fake_token = self.fake_token_prefix + player
+            response = self._join(player)
+
+            uuid.uuid4.assert_called_once()
+            self.assertEquals(response.status_code, status.HTTP_200_OK)
+            self.assertContains(response, fake_token)
+
+    def test_api_cannot_join_twice(self):
+        """Test that the API cannot join twice."""
+        for _ in range(2):
+            response = self._join(self.x)
+
+        self.assertEquals(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_api_can_move_with_a_valid_token(self):
+        """Test that the API can move with a valid token."""
+        self._join(self.x)
+
         expected_game = json.dumps([
             [True, None, None],
             [None, None, None],
             [None, None, None]
         ])
         response = self.client.post(
-            reverse('details', kwargs={'pk': game.id}),
+            reverse('details', kwargs={'pk': self.game.id}),
             {'row': 0, 'col': 0},
-            format='json')
+            format='json',
+            HTTP_AUTHORIZATION='Token ' + self.fake_token_prefix + self.x)
+
         self.assertEquals(response.status_code, status.HTTP_200_OK)
         self.assertContains(response, expected_game)
 
+    def test_api_cannot_move_without_a_valid_token(self):
+        """Test that the API cannot move without a valid token."""
+        response = self.client.post(
+            reverse('details', kwargs={'pk': self.game.id}),
+            {'row': 0, 'col': 0},
+            format='json')
+
+        self.assertEquals(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        response = self.client.post(
+            reverse('details', kwargs={'pk': self.game.id}),
+            {'row': 0, 'col': 0},
+            format='json',
+            HTTP_AUTHORIZATION='...missing...')
+
+        self.assertEquals(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        response = self.client.post(
+            reverse('details', kwargs={'pk': self.game.id}),
+            {'row': 0, 'col': 0},
+            format='json',
+            HTTP_AUTHORIZATION='Token ')
+
+        self.assertEquals(response.status_code, status.HTTP_403_FORBIDDEN)
+
     def test_api_requires_row_parameter(self):
         """Test that the API requires the row parameter."""
-        game = Game.objects.get(pk=Game.MASTER_GAME_ID)
+        self._join(self.x)
+
         response = self.client.post(
-            reverse('details', kwargs={'pk': game.id}),
+            reverse('details', kwargs={'pk': self.game.id}),
             {'col': 0},
-            format='json')
+            format='json',
+            HTTP_AUTHORIZATION='Token ' + self.fake_token_prefix + self.x)
+
         self.assertEquals(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_api_requires_col_parameter(self):
         """Test that the API requires the col parameter."""
-        game = Game.objects.get(pk=Game.MASTER_GAME_ID)
+        self._join(self.x)
+
         response = self.client.post(
-            reverse('details', kwargs={'pk': game.id}),
+            reverse('details', kwargs={'pk': self.game.id}),
             {'row': 0},
-            format='json')
+            format='json',
+            HTTP_AUTHORIZATION='Token ' + self.fake_token_prefix + self.x)
+
         self.assertEquals(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_api_requires_row_and_col_in_range(self):
         """Test that the API requires row and col be in range."""
-        game = Game.objects.get(pk=Game.MASTER_GAME_ID)
+        self._join(self.x)
+
         invalids = [
             {'row': -1, 'col': 0},
             {'row': 0, 'col': -1},
@@ -87,9 +155,11 @@ class ViewTestCase(TestCase):
         ]
         for invalid in invalids:
             response = self.client.post(
-                reverse('details', kwargs={'pk': game.id}),
+                reverse('details', kwargs={'pk': self.game.id}),
                 invalid,
-                format='json')
+                format='json',
+                HTTP_AUTHORIZATION='Token ' + self.fake_token_prefix + self.x)
+
             self.assertEquals(
                 response.status_code,
                 status.HTTP_400_BAD_REQUEST)

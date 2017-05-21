@@ -1,14 +1,16 @@
 import json
-from rest_framework import generics, serializers, status
+import uuid
+from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .serializers import GameSerializer
 from .models import Game
+from .permissions import IsOwnerOrReadOnly
 
 
 
 class GameList(generics.ListCreateAPIView):
-    """Handle POST."""
+    """CRUD operations on games."""
 
     queryset = Game.objects.all()
     serializer_class = GameSerializer
@@ -23,34 +25,34 @@ class GameList(generics.ListCreateAPIView):
 
 
 class GameDetail(APIView):
-    """Handle GET, POST, PUT, and DELETE."""
+    """CRUD operations on a game."""
+
+    permission_classes = (IsOwnerOrReadOnly,)
 
     def get(self, request, pk, format=None):
         """Get a game."""
         # per http://stackoverflow.com/a/4300377
-        game = Game.objects.get(pk=Game.MASTER_GAME_ID)
+        game = Game.objects.get(pk=pk)
         serializer = GameSerializer(game)
         return Response(serializer.data)
 
     def post(self, request, pk, format=None):
         """Make a move."""
+        game = Game.objects.get(pk=pk)
+        # per http://stackoverflow.com/a/22567895
+        self.check_object_permissions(self.request, game)
+
         player = True  # @todo use authorization token
         row, col, err = self._parse_row_col()
         if err:
             return err
-
-        # per http://stackoverflow.com/a/4300377
-        game = Game.objects.get(pk=Game.MASTER_GAME_ID)
 
         board = json.loads(game.board)
         board[row][col] = player
         board_json = json.dumps(board)
 
         serializer = GameSerializer(data={'board': board_json})
-        if not serializer.is_valid():
-            raise serializers.ValidationError(
-                'Invalid move at board[{}][{}]: {}'.format(
-                    row, col, serializer.errors))
+        serializer.is_valid(raise_exception=True)
         serializer.update(game, serializer.data)
         return Response(serializer.data)
 
@@ -71,3 +73,40 @@ class GameDetail(APIView):
                     0, Game.BOARD_SIZE - 1),
                 status=status.HTTP_400_BAD_REQUEST)
         return row, col, None
+
+
+class JoinGame(APIView):
+    """Join a game."""
+
+    def post(self, request, pk, player, format=None):
+        """Join a game."""
+        game = Game.objects.get(pk=pk)
+        if game.x_token and game.o_token:
+            return Response(
+                'both X and O have already joined this game',
+                status=status.HTTP_403_FORBIDDEN)
+        if player == 'X':
+            if game.x_token:
+                return Response(
+                    'X has already joined this game; try joining as O',
+                    status=status.HTTP_403_FORBIDDEN)
+            else:
+                return self._update_token(game, player)
+        else:
+            if game.o_token:
+                return Response(
+                    'O has already joined this game; try joining as X',
+                    status=status.HTTP_403_FORBIDDEN)
+            else:
+                return self._update_token(game, player)
+
+    def _update_token(self, game, player):
+        """Generate an authorization token for either the X or O player."""
+        token = str(uuid.uuid4())
+        token_field_name = player.lower() + '_token'
+        serializer = GameSerializer(data={
+            'board': game.board,
+            token_field_name: token})
+        serializer.is_valid(raise_exception=True)
+        serializer.update(game, serializer.data)
+        return Response(token)

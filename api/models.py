@@ -5,10 +5,11 @@ from django.db import models
 class Game(models.Model):
     """Tic-tac-toe game."""
 
-    MASTER_GAME_ID = 1  # hard-code for minimum viable product
     BOARD_SIZE = 3
 
     board = models.CharField(max_length=255, blank=False)
+    x_token = models.CharField(max_length=255, null=True)  # secret
+    o_token = models.CharField(max_length=255, null=True)  # secret
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 

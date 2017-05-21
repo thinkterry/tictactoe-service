@@ -4,13 +4,21 @@ from .models import Game
 
 
 class GameSerializer(serializers.ModelSerializer):
-    """Serialize model as JSON."""
+    """Serialize a game."""
 
     class Meta:
         """Map serializer fields to model fields."""
 
         model = Game
-        fields = ('id', 'board')
+        fields = ('id', 'board', 'x_token', 'o_token')
+        # Ideally these secret tokens would be 'write_only' to
+        # ensure they remain secret to the users. Unfortunately,
+        # doing so also ensures they remain secret to the views
+        # trying to use them to authorize requests.
+        # per http://stackoverflow.com/a/36771366:
+        # extra_kwargs = {
+        #     'x_token': {'write_only': True},
+        #     'o_token': {'write_only': True}}
 
 
     def validate_board(self, value):
