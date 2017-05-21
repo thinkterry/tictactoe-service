@@ -1,3 +1,4 @@
+import json
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 from rest_framework import status
@@ -23,54 +24,72 @@ class ModelTestCase(TestCase):
 class ViewTestCase(TestCase):
     """Test the view."""
 
+    fixtures = ['tests.json']
+
     def setUp(self):
         """Set up the tests."""
         self.client = APIClient()
-        data = {'board': [
-            [None, None, None],
-            [None, None, None],
-            [None, None, None]
-        ]}
         self.response = self.client.post(
             reverse('create'),
-            data,
             format='json')
-
-    def test_api_can_create_a_game(self):
-        """Test that the API can create a game."""
-        self.assertEqual(self.response.status_code, status.HTTP_201_CREATED)
 
     def test_api_can_get_a_game(self):
         """Test that the API can get a game."""
-        game = Game.objects.get()
+        game = Game.objects.get(pk=Game.MASTER_GAME_ID)
         response = self.client.get(
             reverse('details', kwargs={'pk': game.id}),
             format='json')
-
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertContains(response, game)
+        self.assertContains(response, game.board)
 
-    def test_api_can_update_a_game(self):
-        """Test that the API can update a game."""
-        game = Game.objects.get()
-        new_data = {'board': [
-            [None, None, None],
+    def test_api_can_make_a_move(self):
+        """Test that the API can make a move."""
+        game = Game.objects.get(pk=Game.MASTER_GAME_ID)
+        expected_game = json.dumps([
+            [True, None, None],
             [None, None, None],
             [None, None, None]
-        ]}
-        res = self.client.put(
+        ])
+        response = self.client.post(
             reverse('details', kwargs={'pk': game.id}),
-            new_data,
-            format='json'
-        )
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
+            {'row': 0, 'col': 0},
+            format='json')
+        self.assertEquals(response.status_code, status.HTTP_200_OK)
+        self.assertContains(response, expected_game)
 
-    def test_api_can_delete_a_game(self):
-        """Test that the API can delete a game."""
-        game = Game.objects.get()
-        response = self.client.delete(
+    def test_api_requires_row_parameter(self):
+        """Test that the API requires the row parameter."""
+        game = Game.objects.get(pk=Game.MASTER_GAME_ID)
+        response = self.client.post(
             reverse('details', kwargs={'pk': game.id}),
-            format='json',
-            follow=True)
+            {'col': 0},
+            format='json')
+        self.assertEquals(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-        self.assertEquals(response.status_code, status.HTTP_204_NO_CONTENT)
+    def test_api_requires_col_parameter(self):
+        """Test that the API requires the col parameter."""
+        game = Game.objects.get(pk=Game.MASTER_GAME_ID)
+        response = self.client.post(
+            reverse('details', kwargs={'pk': game.id}),
+            {'row': 0},
+            format='json')
+        self.assertEquals(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_api_requires_row_and_col_in_range(self):
+        """Test that the API requires row and col be in range."""
+        game = Game.objects.get(pk=Game.MASTER_GAME_ID)
+        invalids = [
+            {'row': -1, 'col': 0},
+            {'row': 0, 'col': -1},
+            {'row': 3, 'col': 0},
+            {'row': 0, 'col': 3},
+            {'row': 'row', 'col': 'col'}
+        ]
+        for invalid in invalids:
+            response = self.client.post(
+                reverse('details', kwargs={'pk': game.id}),
+                invalid,
+                format='json')
+            self.assertEquals(
+                response.status_code,
+                status.HTTP_400_BAD_REQUEST)
