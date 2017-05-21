@@ -14,7 +14,7 @@ class Game(models.Model):
 
     def __str__(self):
         """Return string representation."""
-        return self.board()
+        return self.board
 
     @property
     def board(self):

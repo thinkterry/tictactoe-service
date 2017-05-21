@@ -4,7 +4,7 @@ from .models import Game
 
 
 class CreateView(generics.ListCreateAPIView):
-    """The create view."""
+    """Handle POST."""
 
     queryset = Game.objects.all()
     serializer_class = GameSerializer
@@ -12,3 +12,10 @@ class CreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         """Save new object to database."""
         serializer.save()
+
+
+class DetailsView(generics.RetrieveUpdateDestroyAPIView):
+    """Handle GET, PUT, and DELETE."""
+
+    queryset = Game.objects.all()
+    serializer_class = GameSerializer
