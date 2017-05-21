@@ -163,3 +163,27 @@ class ViewTestCase(TestCase):
             self.assertEquals(
                 response.status_code,
                 status.HTTP_400_BAD_REQUEST)
+
+    def test_api_players_place_their_own_pieces(self):
+        """Test that API players place their own pieces."""
+        self._join(self.x)
+        self._join(self.o)
+
+        expected_game = json.dumps([
+            [True, None, None],
+            [None, None, None],
+            [None, None, False]
+        ])
+        self.client.post(
+            reverse('details', kwargs={'pk': self.game.id}),
+            {'row': 0, 'col': 0},
+            format='json',
+            HTTP_AUTHORIZATION='Token ' + self.fake_token_prefix + self.x)
+        response = self.client.post(
+            reverse('details', kwargs={'pk': self.game.id}),
+            {'row': 2, 'col': 2},
+            format='json',
+            HTTP_AUTHORIZATION='Token ' + self.fake_token_prefix + self.o)
+
+        self.assertEquals(response.status_code, status.HTTP_200_OK)
+        self.assertContains(response, expected_game)

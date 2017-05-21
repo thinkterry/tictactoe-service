@@ -28,3 +28,12 @@ class Game(models.Model):
             return 'X'
         else:
             return 'O'
+
+    def _get_player(self, token):
+        """Return the player the given token belongs to."""
+        if token == self.x_token:
+            return True
+        elif token == self.o_token:
+            return False
+        else:
+            raise ValueError('Unauthorized token: {}'.format(token))

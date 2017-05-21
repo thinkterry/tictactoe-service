@@ -14,12 +14,16 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
 
+        header_token = self._parse_header_token(request)
+        return header_token and header_token in [obj.x_token, obj.o_token]
+
+    def _parse_header_token(self, request):
+        """Extract authorization token from request headers."""
+        # @todo DRY with .views
         try:
             # per http://stackoverflow.com/a/3889790
-            header_token = request.META.get(
+            return request.META.get(
                 'HTTP_AUTHORIZATION'
             ).strip().split()[1]
         except Exception:
-            return False
-
-        return header_token in [obj.x_token, obj.o_token]
+            return None

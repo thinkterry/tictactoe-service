@@ -42,7 +42,7 @@ class GameDetail(APIView):
         # per http://stackoverflow.com/a/22567895
         self.check_object_permissions(self.request, game)
 
-        player = True  # @todo use authorization token
+        player = game._get_player(self._parse_header_token(self.request))
         row, col, err = self._parse_row_col()
         if err:
             return err
@@ -55,6 +55,17 @@ class GameDetail(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.update(game, serializer.data)
         return Response(serializer.data)
+
+    def _parse_header_token(self, request):
+        """Extract authorization token from request headers."""
+        # @todo DRY with .permissions
+        try:
+            # per http://stackoverflow.com/a/3889790
+            return request.META.get(
+                'HTTP_AUTHORIZATION'
+            ).strip().split()[1]
+        except Exception:
+            return None
 
     def _parse_row_col(self):
         """Extract row and col from request body."""
@@ -109,4 +120,4 @@ class JoinGame(APIView):
             token_field_name: token})
         serializer.is_valid(raise_exception=True)
         serializer.update(game, serializer.data)
-        return Response(token)
+        return Response({'token': token})
