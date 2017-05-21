@@ -1,3 +1,4 @@
+import json
 from rest_framework import generics
 from .serializers import GameSerializer
 from .models import Game
@@ -11,7 +12,11 @@ class CreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         """Save new object to database."""
-        serializer.save()
+        empty_board = json.dumps([
+            [None, None, None],
+            [None, None, None],
+            [None, None, None]])
+        serializer.save(_board=empty_board)
 
 
 class DetailsView(generics.RetrieveUpdateDestroyAPIView):
