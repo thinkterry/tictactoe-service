@@ -51,9 +51,9 @@ class GameDetail(APIView):
         serializer.update(game, serializer.data)
         return Response(serializer.data)
 
+    # @DRY permissions.py
     def _parse_header_token(self, request):
         """Extract authorization token from request headers."""
-        # @todo DRY with .permissions
         try:
             # per http://stackoverflow.com/a/3889790
             return request.META.get(
@@ -63,7 +63,11 @@ class GameDetail(APIView):
             return None
 
     def _parse_row_col(self):
-        """Extract row and col from request body."""
+        """Extract row and col from request body, if able.
+
+        Returns:
+        row, col, err Response
+        """
         row = self.request.data.get('row')
         col = self.request.data.get('col')
         try:

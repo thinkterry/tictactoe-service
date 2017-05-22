@@ -17,9 +17,9 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
         header_token = self._parse_header_token(request)
         return header_token and header_token in [obj.x_token, obj.o_token]
 
+    # @DRY views.py
     def _parse_header_token(self, request):
         """Extract authorization token from request headers."""
-        # @todo DRY with .views
         try:
             # per http://stackoverflow.com/a/3889790
             return request.META.get(

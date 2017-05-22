@@ -28,7 +28,7 @@ class GameSerializer(serializers.ModelSerializer):
 
 
     def validate_board(self, value):
-        """Ensure board is an nxn array of booleans."""
+        """Ensure board is an NxN array of booleans."""
         try:
             board = json.loads(value)
         except Exception as e:

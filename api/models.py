@@ -6,18 +6,14 @@ class Game(models.Model):
     """Tic-tac-toe game.
 
     Each player, upon joining the game as their chosen piece (X or O)
-    is given a token, which authorizes them to make moves. Internally,
-    the X player is represented by a True value and the O player is
-    represented by a False value."""
+    is given a "secret" token, which authorizes them to make moves.
+    Internally, the X-player is represented by True and the O-player
+    by False."""
 
     BOARD_SIZE = 3
 
     board = models.CharField(max_length=255, blank=False, default=json.dumps(
-        [
-            [None, None, None],
-            [None, None, None],
-            [None, None, None]
-        ]))
+        [[None] * BOARD_SIZE] * BOARD_SIZE))
     current_player = models.BooleanField(default=True)
     winner = models.NullBooleanField()
     x_token = models.CharField(max_length=255, null=True)
@@ -34,6 +30,7 @@ class Game(models.Model):
         return retval
 
     def _player_to_str(self, player):
+        """Return string representation."""
         if player is None:
             return '-'
         elif player:
@@ -72,7 +69,7 @@ class Game(models.Model):
         return None
 
     def _row_winner(self, board):
-        """Check rows."""
+        """Return the winner by row."""
         for r in range(len(board)):
             ref = board[r][0]
             if ref is None:
@@ -82,7 +79,7 @@ class Game(models.Model):
         return None
 
     def _column_winner(self, board):
-        """Check columns."""
+        """Return the winner by column."""
         for c in range(len(board[0])):
             ref = board[0][c]
             if ref is None:
@@ -97,7 +94,7 @@ class Game(models.Model):
         return None
 
     def _diagonal_ul_lr(self, board):
-        """Check diagonal: upper-left to lower-right."""
+        """Return the winner by the upper-left to lower-right diagonal."""
         all_match = True  # innocent until proven guilty
         ref = board[0][0]
         for d in range(1, len(board)):
@@ -109,8 +106,7 @@ class Game(models.Model):
         return None
 
     def _diagonal_ll_ur(self, board):
-        """Check diagonal: lower-left to upper-right."""
-        # diagonal: lower-left to upper-right
+        """Return the winner by the lower-left to upper-right diagonal."""
         all_match = True  # innocent until proven guilty
         ref = board[-1][0]
         for d in range(1, len(board)):

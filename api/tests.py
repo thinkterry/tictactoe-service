@@ -7,6 +7,8 @@ from rest_framework import status
 from rest_framework.test import APIClient
 from .models import Game
 
+# @assume Game.BOARD_SIZE == 3 for simplicity in defining expected output
+
 
 class ModelTestCase(TestCase):
     """Test the model."""
