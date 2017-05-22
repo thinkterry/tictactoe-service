@@ -1,9 +1,0 @@
-[{
-    "model": "api.game",
-    "pk": 1,
-    "fields": {
-        "board": "[[null, null, null], [null, null, null], [null, null, null]]",
-        "created": "2017-05-21T00:00:00.000Z",
-        "modified": "2017-05-21T00:00:00.000Z"
-    }
-}]

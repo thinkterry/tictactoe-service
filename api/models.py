@@ -12,7 +12,12 @@ class Game(models.Model):
 
     BOARD_SIZE = 3
 
-    board = models.CharField(max_length=255, blank=False)  # JSON
+    board = models.CharField(max_length=255, blank=False, default=json.dumps(
+        [
+            [None, None, None],
+            [None, None, None],
+            [None, None, None]
+        ]))
     current_player = models.BooleanField(default=True)
     winner = models.NullBooleanField()
     x_token = models.CharField(max_length=255, null=True)

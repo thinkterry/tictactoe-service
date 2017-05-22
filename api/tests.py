@@ -64,8 +64,6 @@ class ModelTestCase(TestCase):
 class ViewTestCase(TestCase):
     """Test the view."""
 
-    fixtures = ['tests.json']
-
     def setUp(self):
         """Set up the tests."""
         self.client = APIClient()

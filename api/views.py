@@ -10,18 +10,10 @@ from .permissions import IsOwnerOrReadOnly
 
 
 class GameList(generics.ListCreateAPIView):
-    """CRUD operations on games."""
+    """List and create operations on games."""
 
     queryset = Game.objects.all()
     serializer_class = GameSerializer
-
-    def perform_create(self, serializer):
-        """Save new object to database."""
-        empty_board = json.dumps([
-            [None, None, None],
-            [None, None, None],
-            [None, None, None]])
-        serializer.save(board=empty_board)
 
 
 class GameDetail(APIView):
