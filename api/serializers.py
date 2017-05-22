@@ -10,12 +10,18 @@ class GameSerializer(serializers.ModelSerializer):
         """Map serializer fields to model fields."""
 
         model = Game
-        fields = ('id', 'board', 'x_token', 'o_token', 'current_player')
+        fields = (
+            'id',
+            'board',
+            'x_token',
+            'o_token',
+            'current_player',
+            'winner')
         # Ideally these secret tokens would be 'write_only' to
         # ensure they remain secret to the users. Unfortunately,
         # doing so also ensures they remain secret to the views
         # trying to use them to authorize requests.
-        # per http://stackoverflow.com/a/36771366:
+        # 'write_only' per http://stackoverflow.com/a/36771366:
         # extra_kwargs = {
         #     'x_token': {'write_only': True},
         #     'o_token': {'write_only': True}}

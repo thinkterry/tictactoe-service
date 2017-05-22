@@ -46,15 +46,15 @@ class GameDetail(APIView):
         row, col, err = self._parse_row_col()
         if err:
             return err
-
         board = json.loads(game.board)
         GameSerializer().validate_move(game, board, player, row, col)
+
         board[row][col] = player
-        board_json = json.dumps(board)
 
         serializer = GameSerializer(data={
-            'board': board_json,
-            'current_player': (not game.current_player)})
+            'board': json.dumps(board),
+            'current_player': (not game.current_player),
+            'winner': game._and_the_winner_is(board)})
         serializer.is_valid(raise_exception=True)
         serializer.update(game, serializer.data)
         return Response(serializer.data)
