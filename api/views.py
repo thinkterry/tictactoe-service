@@ -17,7 +17,7 @@ class GameList(generics.ListCreateAPIView):
 
 
 class GameDetail(APIView):
-    """CRUD operations on a game."""
+    """GET a game or make a move."""
 
     permission_classes = (IsOwnerOrReadOnly,)
 
@@ -95,7 +95,7 @@ class JoinGame(APIView):
             return Response(
                 'Both X and O have already joined this game',
                 status=status.HTTP_403_FORBIDDEN)
-        if player == 'X':
+        if player == 'x':
             if game.x_token:
                 return Response(
                     'X has already joined this game; try joining as O',

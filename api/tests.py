@@ -74,8 +74,8 @@ class ViewTestCase(TestCase):
             format='json')
         self.game = Game.objects.all().first()
         self.fake_token_prefix = 'abc-123'
-        self.x = 'X'
-        self.o = 'O'
+        self.x = 'x'
+        self.o = 'o'
 
     def _join(self, player):
         fake_token = self.fake_token_prefix + player

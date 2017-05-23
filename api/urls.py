@@ -7,7 +7,7 @@ urlpatterns = {
     url(r'^games/$', GameList.as_view(), name='create'),
     url(r'^games/(?P<pk>[0-9]+)/$', GameDetail.as_view(), name='details'),
     url(
-        r'^games/(?P<pk>[0-9]+)/join/(?P<player>[X|O])/$',
+        r'^games/(?P<pk>[0-9]+)/join/(?P<player>[x|o])/$',
         JoinGame.as_view(), name='join'),
 }
 
